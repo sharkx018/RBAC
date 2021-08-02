@@ -15,11 +15,6 @@ const seedResources = () => {
     resourcesArr.addNewResource(NOTIFICATION);
 }
 
-const seedUsers = () => {
-    usersArr.addUser("myAdminId", "admin")
-    usersArr.addUser("myUserId", "user")
-
-}
 
 const seedRoles = () => {
     roleArr.addNewRole("admin", [{ name: DASHBOARD, write: true, read: true, delete: true },
@@ -28,11 +23,16 @@ const seedRoles = () => {
     { name: NOTIFICATION, write: true, read: true, delete: true }
     ])
 
-    roleArr.addNewRole("user", [{ name: DASHBOARD, write: true, read: true, delete: true },
+    roleArr.addNewRole("user", [{ name: DASHBOARD, write: true, read: true, delete: false },
     { name: NOTIFICATION, write: true, read: true, delete: true }
     ])
-
 }
+
+const seedUsers = () => {
+    usersArr.addUser("myAdminId", "admin")
+    usersArr.addUser("myUserId", "user")
+}
+
 
 const seedData = () => {
 
@@ -46,8 +46,51 @@ const main = () => {
     seedData();
 
     console.log(usersArr.allUsers);
-    // console.log(JSON.stringify(roleArr.allRoles, null, 2));
-    // console.log(resourcesArr.allResources);
+    console.log(JSON.stringify(roleArr.allRoles, null, 2));
+    console.log(resourcesArr.allResources);
+
+    let isAccessable = checkRolePermission("myUserId", DASHBOARD, "DELETE");
+    console.log("isAccessable", isAccessable);
+}
+
+const checkRolePermission = (userId, resourceRequested, requestedActionType) => {
+
+    let user = usersArr.allUsers.find(p => p.userId == userId);
+    if (user == null) {
+        console.log("No user Found");
+        return false;
+    }
+
+    let roleItem = roleArr.allRoles.find(p => p.roleName == user.role)
+
+    console.log("==>>>>>",roleItem);
+
+
+    let resourceAccess = roleItem.availableResources.find(p => p.resource.name == resourceRequested);
+
+    if (resourceAccess == null) {
+        console.log("No access found");
+        return false;
+    }
+
+    let flag = false;
+
+    switch (requestedActionType) {
+        case "READ":
+            flag = resourceAccess.actionType.read == true
+            break;
+        case "WRITE":
+            flag = resourceAccess.actionType.write == true
+            break;
+        case "DELETE":
+            flag = resourceAccess.actionType.delete == true
+            break;
+        default:
+            break;
+    }
+
+    return flag;
+
 }
 
 

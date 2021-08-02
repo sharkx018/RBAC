@@ -19,15 +19,15 @@ class Role {
 }
 
 class RoleItem {
-    name = "";
+    roleName = "";
     // availableResources: [{ actionType: ActionType, resource: ResourceItem }];
     availableResources = [];
 
 
-    // constructor(name: string, resources: ResourceItem[]) {
-    constructor(name, resourcePermissionArr = []) {
+    // constructor(roleName: string, resources: ResourceItem[]) {
+    constructor(roleName, resourcePermissionArr = []) {
 
-        this.name = name;
+        this.roleName = roleName;
         resourcePermissionArr.forEach(p=>{
             this.availableResources.push({
                 resource: new ResourceItem(p.name),
