@@ -1,24 +1,30 @@
-let {Role, RoleItem} = require('./Role')
+let { Role, RoleItem } = require('./Role')
 
-class User{
+class User {
     allUsers = [];
-    constructor(){
+    constructor() {
         this.allUsers = [];
     }
 
-    addUser(userId, role) {
-        this.allUsers.push(new UserItem(userId, role))
+    addUser(userId, password, roles=[]) {
+        this.allUsers.push(new UserItem(userId, password, roles))
     }
 
 }
 
 
-class UserItem{
+class UserItem {
 
-    constructor(userId, role){
-        this.userId = userId,
-        this.role = role
+    constructor(userId, password, roles) {
+        this.userId = userId
+        this.password = password
+        this.roles = roles
     }
+
+    addRole(newRole){
+        this.roles.push(newRole);
+    }
+
 }
 
 // let allUsers = [
