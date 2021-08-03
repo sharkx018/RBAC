@@ -34,8 +34,8 @@ const seedRoles = () => {
 }
 
 const seedUsers = () => {
-    usersArr.addUser("myAdminId", "12345", ["admin"])
-    usersArr.addUser("myUserId", "12345", ["user"]);
+    usersArr.addUser("adminId", "123", ["admin"])
+    usersArr.addUser("userId", "123", ["user"]);
 }
 
 
@@ -76,14 +76,20 @@ const main = async () => {
 }
 
 const handleAdmin = async () => {
-    let choices = ["Login as anothor user",
-        "Create a user",
-        "Update user role",
-        "Edit a role",
-        "Add a resource",
-        "List all Roles",
-        "List all Resources",
-        "List all Users"
+    let choices = [
+        "Login as anothor user",        //0 =======
+
+        "Create a user",                //1 =======
+        "View all Users",               //2             all or on basis of roles
+        "Update user's role",           //3 =======
+
+        "Add new Role",                 //4 ======
+        "View all Roles",               //5 ======
+        "Edit a role",                  //6 ======
+
+        "Add a resource",               //7 ======
+        "View all Resources",           //8 ======
+
     ]
 
     let ans = await inquirer.prompt([{
@@ -95,29 +101,34 @@ const handleAdmin = async () => {
 
     switch (choices.indexOf(ans.ans1)) {
         case 0:
-
             await askForLogin();
             break;
         case 1:
-
             await createUser();
-
             break;
         case 2:
-
-
+            await listAllUsers();
             break;
         case 3:
-
-
+            await updateUserRole();
             break;
+
         case 4:
-
-
+            await addNewRole();
             break;
+
         case 5:
+            listAllRoles();
+            break;
+        case 6:
+            await editRole();
+            break;
 
-
+        case 7:
+            await addResource()
+            break;
+        case 8:
+            await listAllResources();
             break;
         default:
             break
@@ -127,13 +138,388 @@ const handleAdmin = async () => {
 
 }
 
-const createUser = async()=>{
+const listAllUsers = async () => {
+
+
+    let choices = ["List all users", "List user on the basis of role"]
+
+    let ans1 = await inquirer.prompt([{
+        type: 'list',
+        name: "type",
+        message: `List all users`,
+        choices
+    }])
+
+
+    switch (choices.indexOf(ans1.type)) {
+        case 0:
+            logAllUsersByRole();
+            break;
+
+        case 1:
+            let allRoles = [];
+            for (let i in roleArr.allRoles) {
+                allRoles.push(`${roleArr.allRoles[i].roleName}`);
+            }
+
+            let ans2 = await inquirer.prompt([{
+                type: 'list',
+                name: "role",
+                message: `Select a role to filter the users`,
+                choices: allRoles
+            }])
+
+            logAllUsersByRole(ans2.role);
+            break;
+
+        default:
+            break;
+    }
+
+   
+
+
+}
+
+const logAllUsersByRole = (role = null) => {
+
+    console.log("List of all userId(s):");
+    for (let i in usersArr.allUsers) {
+        let idx = usersArr.allUsers[i].roles.findIndex(p => p == role);
+        if (idx != -1 || role == null) {
+            console.log(usersArr.allUsers[i].userId);
+        }
+    }
+
+
+
+}
+
+const updateUserRole = async () => {
+
+
+    let user;
+    let isExit = false;
+
+    // input the resource name 
+    while (1) {
+        let ans1 = await inquirer.prompt([{
+            type: 'input',
+            name: "userId",
+            message: `Enter the userId, type exit() to cancel.`,
+        }])
+
+        // admin is exiting the process
+        if (ans1.userId == "exit()") {
+            isExit = true;
+            break;
+        }
+
+        // find if the valid user exists or not
+        let isValidUser = findUserById(ans1.userId);
+        if (isValidUser) {
+            user = isValidUser
+            break;
+        } else {
+            console.log("No user found, Please try again.");
+        }
+
+    }
+    if (isExit) {
+        return;
+    }
+
+    let roleInfoArr = getRoleInfoForUser(user);
+
+
+    let ans2 = await inquirer.prompt([{
+        type: 'list',
+        name: "roleInfo",
+        message: `Select the role to update.`,
+        choices: roleInfoArr
+    }])
+
+    let [role, status] = parseRoleInfo(ans2.roleInfo);
+
+    let ans3;
+    switch (status) {
+        case "ASSIGNED":
+            ans3 = await inquirer.prompt([{
+                type: 'list',
+                name: "bool",
+                message: `Are you sure to remove the role.`,
+                choices: ["Yes", "No"]
+            }])
+
+            break;
+        case "NOT-ASSIGNED":
+            ans3 = await inquirer.prompt([{
+                type: 'list',
+                name: "bool",
+                message: `Are you sure to assign the role.`,
+                choices: ["Yes", "No"]
+            }])
+            break;
+        default:
+            break;
+    }
+
+    if (ans3.bool == "Yes") {
+        user.toogleRole(role);
+    }
+
+}
+
+const getRoleInfoForUser = (user) => {
+
+    let allRoleInfo = [];
+    for (let i in roleArr.allRoles) {
+        let roleName = roleArr.allRoles[i].roleName
+        let idx = user.roles.findIndex(p => p == roleName);
+        if (idx != -1) {
+            allRoleInfo.push(`${roleName} (ASSIGNED)`)
+        } else {
+            allRoleInfo.push(`${roleName} (NOT-ASSIGNED)`)
+        }
+    }
+    return allRoleInfo;
+
+}
+
+const parseRoleInfo = (roleInfoItem) => {
+    let i = 0;
+    let role = "";
+    let status = "";
+    while (roleInfoItem[i] != " ") {
+        role += roleInfoItem[i];
+        i++;
+    }
+    i += 2;
+
+    while (roleInfoItem[i] != ")") {
+        status += roleInfoItem[i];
+        i++;
+    }
+    return [role, status];
+
+
+}
+
+const findUserById = (userId) => {
+
+    let user = usersArr.allUsers.find(user => user.userId == userId);
+
+    return user;
+
+}
+
+const editRole = async () => {
+    console.log("List of all the roles:");
+
+    let allRoleChoices = [];
+
+    for (let i in roleArr.allRoles) {
+        allRoleChoices.push(`${roleArr.allRoles[i].roleName}`);
+    }
+
+    let ans1 = await inquirer.prompt([{
+        type: 'list',
+        name: "roleChoice",
+        message: `Select a role`,
+        choices: allRoleChoices
+    }])
+
+    let resourceDetailsArr = getResoureceDetailsForGivenRole(ans1.roleChoice); //TODO
+
+    let ans2 = await inquirer.prompt([{
+        type: 'list',
+        name: "resourceItem",
+        message: `Select the resource`,
+        choices: resourceDetailsArr
+    }])
+
+    let resourceName = parseResourceName(ans2.resourceItem); //TODO
+
+    let actionType = await inquirer.prompt([
+        {
+            type: 'list',
+            name: "read",
+            message: `Read permission`,
+            choices: ["true", "false"]
+        },
+        {
+            type: 'list',
+            name: "write",
+            message: `Write permission`,
+            choices: ["true", "false"]
+        },
+        {
+            type: 'list',
+            name: "delete",
+            message: `Delete permission`,
+            choices: ["true", "false"]
+        }
+    ])
+
+    updateRoleForGivenResource(ans1.roleChoice, resourceName, actionType); //TODO
+
+}
+
+const getResoureceDetailsForGivenRole = (role) => {
+
+    let arr = [];
+
+    // find the roleObj forom role table
+    let roleObj = roleArr.allRoles.find(p => p.roleName == role)
+
+    for (let i in resourcesArr.allResources) {
+        let resourceName = resourcesArr.allResources[i].name;
+
+        let permissionForResource = roleObj.availableResources.find(p => p.resource.name == resourceName);
+        if (permissionForResource == null) {
+            arr.push(`${resourceName} ( Read = fasle, Write = false, Delete = false )`);
+        } else {
+            arr.push(`${resourceName} ( Read = ${permissionForResource.actionType.read}, Write = ${permissionForResource.actionType.write}, Delete = ${permissionForResource.actionType.delete} )`);
+        }
+
+    }
+
+    return arr;
+
+}
+
+const parseResourceName = (resourceItem) => {
+
+    let resourceName = "";
+    let i = 0;
+    while (resourceItem[i] != ' ') {
+        resourceName += resourceItem[i];
+        i++;
+    }
+    return resourceName
+
+}
+
+const updateRoleForGivenResource = (roleName, resourceName, actionType) => {
+
+    // find the roleObj forom role table
+    let roleItem = roleArr.allRoles.find(p => p.roleName == roleName)
+    // console.log(roleItem);
+
+    roleItem.upsertResourcePermission(resourceName, actionType.write.toLowerCase() == 'true', actionType.read.toLowerCase() == 'true', actionType.delete.toLowerCase() == 'true');
+
+
+}
+
+const addNewRole = async () => {
+
+    // make a new entry and include all the resouces arr in it.
+
+    let roleName = "";
+    let isExit = false;
+
+    // input the resource name 
+    while (1) {
+        let ans1 = await inquirer.prompt([{
+            type: 'input',
+            name: "roleName",
+            message: `Enter the role name`,
+        }])
+
+        // admin is exiting the process
+        if (ans1.roleName == "exit()") {
+            isExit = true;
+            break;
+        }
+
+        // TODO validate the resource for duplication
+        let isValidRole = true;
+        if (isValidRole) {
+            roleName = ans1.roleName
+            break;
+        } else {
+            console.log("Not a valid role, Please try again.");
+        }
+
+    }
+    if (isExit) {
+        return;
+    }
+
+    roleArr.addNewRole(roleName);
+
+
+}
+
+const listAllRoles = () => {
+
+    console.log("List of all the roles:");
+
+    for (let i in roleArr.allRoles) {
+        console.log(`${+i + 1} ${roleArr.allRoles[i].roleName}`);
+    }
+
+}
+
+
+const listAllResources = () => {
+    console.log("List of all the resources");
+    let allResources = getAllResources();
+
+    for (let i in allResources) {
+        console.log(`${+i + 1} ${allResources[i]}`);
+    }
+
+
+}
+
+const addResource = async () => {
+
+    console.log("Add Resource");
+
+    let resName = "";
+    let isExit = false;
+
+    // input the resource name 
+    while (1) {
+        let ans1 = await inquirer.prompt([{
+            type: 'input',
+            name: "resourceName",
+            message: `Enter the resource name`,
+        }])
+
+        // admin is exiting the process
+        if (ans1.resourceName == "exit()") {
+            isExit = true;
+            break;
+        }
+
+        // TODO validate the resource for duplication
+        let isValidResource = true;
+        if (isValidResource) {
+            resName = ans1.resourceName
+            break;
+        }
+
+    }
+
+    if (isExit) {
+        return;
+    }
+
+    // add in the resource arr;
+    resourcesArr.addNewResource(resName);
+
+
+}
+
+const createUser = async () => {
 
     let userId, password, isExit = false;
 
     console.log("Create a new user");
     // INPUT USERID
-    while(1){
+    while (1) {
         let ans1 = await inquirer.prompt([{
             type: 'input',
             name: "userId",
@@ -141,25 +527,25 @@ const createUser = async()=>{
         }])
 
         // admin is exiting the process
-        if(ans1.userId == "exit()"){
+        if (ans1.userId == "exit()") {
             isExit = true;
             break;
         }
 
         let isValidUserId = true;
         // TODO validate the userId
-        if(isValidUserId){
+        if (isValidUserId) {
             userId = ans1.userId
             break;
         }
     }
 
-    if(isExit){
+    if (isExit) {
         return;
     }
 
     // INPUT
-    while(1){
+    while (1) {
         let ans2 = await inquirer.prompt([{
             type: 'input',
             name: "password",
@@ -167,34 +553,34 @@ const createUser = async()=>{
         }])
 
         // admin is exiting the process
-        if(ans2.password == "exit()"){
+        if (ans2.password == "exit()") {
             isExit = true;
             break;
         }
 
         let isValidPassword = true;
         // TODO validate the password
-        if(isValidPassword){
+        if (isValidPassword) {
             password = ans2.password
             break;
         }
     }
 
-    if(isExit){
+    if (isExit) {
         return;
     }
-    
+
     // ask for role
     usersArr.addUser(userId, password, ["user"]);
     console.log("User created with default role as `user`");
 
-    
-    
+
+
 
 }
 
 const handleNormalUser = async () => {
-    let choices = ['Login as another user', 'View roles', 'access roles']
+    let choices = ['Login as another user', 'View my current roles', 'Access resource']
 
     let ans = await inquirer.prompt([{
         type: 'list',

@@ -6,7 +6,7 @@ class User {
         this.allUsers = [];
     }
 
-    addUser(userId, password, roles=[]) {
+    addUser(userId, password, roles = []) {
         this.allUsers.push(new UserItem(userId, password, roles))
     }
 
@@ -21,8 +21,19 @@ class UserItem {
         this.roles = roles
     }
 
-    addRole(newRole){
+    addRole(newRole) {
         this.roles.push(newRole);
+    }
+
+    toogleRole(role) {
+
+        let idx = this.roles.findIndex(p => p == role);
+        if (idx == -1) {
+            this.roles.push(role);
+        } else {
+            this.roles.splice(idx, 1);
+        }
+
     }
 
 }

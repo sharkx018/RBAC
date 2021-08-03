@@ -23,34 +23,32 @@ class RoleItem {
     // availableResources: [{ actionType: ActionType, resource: ResourceItem }];
     availableResources = [];
 
-
-    // constructor(roleName: string, resources: ResourceItem[]) {
     constructor(roleName, resourcePermissionArr = []) {
 
         this.roleName = roleName;
-        resourcePermissionArr.forEach(p=>{
+        resourcePermissionArr.forEach(p => {
             this.availableResources.push({
                 resource: new ResourceItem(p.name),
                 actionType: new ActionType(p.write, p.read, p.delete)
             })
         })
-        
-        
-        // this.availableResources.add({
-        //     resource: new ResourceItem("DASHBOARD"),
-        //     actionType: new ActionType()
-        // })
+    }
+
+    upsertResourcePermission(resourceName, write = false, read = false, del = false) {
+
+        let idx = this.availableResources.findIndex(p => p.resource.name == resourceName);
+
+        if (idx == -1) {
+            this.availableResources.push({
+                resource: new ResourceItem(resourceName),
+                actionType: new ActionType(write, read, del)
+            })
+        } else {
+            this.availableResources[idx].actionType = new ActionType(write, read, del)
+        }
 
     }
+
 }
-
-// let allRoles = [
-//     new Role("admin"),
-//     new Role("user"),
-//     new Role("writer"),
-//     new Role("content-writer"),
-//     new Role("agent")
-
-// ]
 
 module.exports = { Role, RoleItem }
