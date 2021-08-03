@@ -47,7 +47,7 @@ const seedData = () => {
 
 }
 
-let loggedinUser = null;
+let loggedInUser = null;
 
 const main = async () => {
 
@@ -62,66 +62,187 @@ const main = async () => {
 
     while (1) {
 
-        if (loggedinUser == null) {
+        if (loggedInUser == null) {
             await askForLogin()
             continue;
         }
 
-        let ques = ['Login as another user', 'View roles', 'access roles']
-
-        let ans = await inquirer.prompt([{
-            type: 'list',
-            name: 'ans1',
-            message: `Hi, you are logged in as ${loggedinUser.userId}`,
-            choices: ques,
-        }])
-
-        switch (ques.indexOf(ans.ans1)) {
-            case 0:
-                await askForLogin();
-                break;
-            case 1:
-                logAllRole(loggedinUser);
-                break;
-            case 2:
-                let allResources = getAllResources();
-                let actionType = ["WRITE", "READ", "DELETE"]
-                let resourceAccessQuery = await inquirer.prompt([{
-                    type: 'list',
-                    name: 'resource',
-                    message: 'Please select the resouce',
-                    choices: allResources
-                },
-                {
-                    type: 'list',
-                    name: 'actionType',
-                    message: 'Please select the actionType',
-                    choices: actionType
-                }])
-
-                // ask about resourse and action type
-                if (isResourceAccessable(loggedinUser, resourceAccessQuery)) {
-                    console.log("True: Resoure is accessable with given action type");
-                } else {
-                    console.log("False: Resoure is not accessable with given action type");
-                }
-
-
-                break;
-            default:
-                break;
+        if (isAdmin(loggedInUser)) {
+            await handleAdmin();
+        } else {
+            await handleNormalUser();
         }
+    }
+}
+
+const handleAdmin = async () => {
+    let choices = ["Login as anothor user",
+        "Create a user",
+        "Update user role",
+        "Edit a role",
+        "Add a resource",
+        "List all Roles",
+        "List all Resources",
+        "List all Users"
+    ]
+
+    let ans = await inquirer.prompt([{
+        type: 'list',
+        name: "ans1",
+        message: `Hi, you are logged in as ${loggedInUser.userId}`,
+        choices
+    }])
+
+    switch (choices.indexOf(ans.ans1)) {
+        case 0:
+
+            await askForLogin();
+            break;
+        case 1:
+
+            await createUser();
+
+            break;
+        case 2:
 
 
-        // console.log(ans);
+            break;
+        case 3:
+
+
+            break;
+        case 4:
+
+
+            break;
+        case 5:
+
+
+            break;
+        default:
+            break
     }
 
 
 
 }
 
+const createUser = async()=>{
+
+    let userId, password, isExit = false;
+
+    console.log("Create a new user");
+    // INPUT USERID
+    while(1){
+        let ans1 = await inquirer.prompt([{
+            type: 'input',
+            name: "userId",
+            message: `Enter the userId`,
+        }])
+
+        // admin is exiting the process
+        if(ans1.userId == "exit()"){
+            isExit = true;
+            break;
+        }
+
+        let isValidUserId = true;
+        // TODO validate the userId
+        if(isValidUserId){
+            userId = ans1.userId
+            break;
+        }
+    }
+
+    if(isExit){
+        return;
+    }
+
+    // INPUT
+    while(1){
+        let ans2 = await inquirer.prompt([{
+            type: 'input',
+            name: "password",
+            message: `Enter the password(password will be shown for admin only).`,
+        }])
+
+        // admin is exiting the process
+        if(ans2.password == "exit()"){
+            isExit = true;
+            break;
+        }
+
+        let isValidPassword = true;
+        // TODO validate the password
+        if(isValidPassword){
+            password = ans2.password
+            break;
+        }
+    }
+
+    if(isExit){
+        return;
+    }
+    
+    // ask for role
+    usersArr.addUser(userId, password, ["user"]);
+    console.log("User created with default role as `user`");
+
+    
+    
+
+}
+
+const handleNormalUser = async () => {
+    let choices = ['Login as another user', 'View roles', 'access roles']
+
+    let ans = await inquirer.prompt([{
+        type: 'list',
+        name: 'ans1',
+        message: `Hi, you are logged in as ${loggedInUser.userId}`,
+        choices: choices,
+    }])
+
+    switch (choices.indexOf(ans.ans1)) {
+        case 0:
+            await askForLogin();
+            break;
+        case 1:
+            logAllRole(loggedInUser);
+            break;
+        case 2:
+            let allResources = getAllResources();
+            let actionType = ["WRITE", "READ", "DELETE"]
+            let resourceAccessQuery = await inquirer.prompt([{
+                type: 'list',
+                name: 'resource',
+                message: 'Please select the resouce',
+                choices: allResources
+            },
+            {
+                type: 'list',
+                name: 'actionType',
+                message: 'Please select the actionType',
+                choices: actionType
+            }])
+
+            // ask about resourse and action type
+            if (isResourceAccessable(loggedInUser, resourceAccessQuery)) {
+                console.log("True: Resoure is accessable with given action type");
+            } else {
+                console.log("False: Resoure is not accessable with given action type");
+            }
+
+
+            break;
+        default:
+            break;
+    }
+}
+
 
 const askForLogin = async () => {
+    console.log("Welcome to the Login");
     let ans = await inquirer
         .prompt([
             {
@@ -139,7 +260,7 @@ const askForLogin = async () => {
     let x = usersArr.allUsers.find(user => user.userId == ans.username && user.password == ans.pass)
 
     if (x != null) {
-        loggedinUser = x;
+        loggedInUser = x;
     } else {
         console.log("Incorrect Credentials");
     }
@@ -151,50 +272,50 @@ const logAllRole = (loggedInUser) => {
     // console.log("==>>>>", loggedInUser);
 
     console.log("List of all the roles.")
-    for (let i in loggedInUser.role) {
-        console.log(loggedInUser.role[i]);
+    for (let i in loggedInUser.roles) {
+        console.log(loggedInUser.roles[i]);
     }
 }
 
-const checkRolePermission = (userId, resourceRequested, requestedActionType) => {
+// const checkRolePermission = (userId, resourceRequested, requestedActionType) => {
 
-    let user = usersArr.allUsers.find(p => p.userId == userId);
-    if (user == null) {
-        console.log("No user Found");
-        return false;
-    }
+//     let user = usersArr.allUsers.find(p => p.userId == userId);
+//     if (user == null) {
+//         console.log("No user Found");
+//         return false;
+//     }
 
-    let roleItem = roleArr.allRoles.find(p => p.roleName == user.role)
+//     let roleItem = roleArr.allRoles.find(p => p.roleName == user.role)
 
-    // console.log("==>>>>>",roleItem);
+//     // console.log("==>>>>>",roleItem);
 
 
-    let resourceAccess = roleItem.availableResources.find(p => p.resource.name == resourceRequested);
+//     let resourceAccess = roleItem.availableResources.find(p => p.resource.name == resourceRequested);
 
-    if (resourceAccess == null) {
-        console.log("No access found");
-        return false;
-    }
+//     if (resourceAccess == null) {
+//         console.log("No access found");
+//         return false;
+//     }
 
-    let flag = false;
+//     let flag = false;
 
-    switch (requestedActionType) {
-        case "READ":
-            flag = resourceAccess.actionType.read == true
-            break;
-        case "WRITE":
-            flag = resourceAccess.actionType.write == true
-            break;
-        case "DELETE":
-            flag = resourceAccess.actionType.delete == true
-            break;
-        default:
-            break;
-    }
+//     switch (requestedActionType) {
+//         case "READ":
+//             flag = resourceAccess.actionType.read == true
+//             break;
+//         case "WRITE":
+//             flag = resourceAccess.actionType.write == true
+//             break;
+//         case "DELETE":
+//             flag = resourceAccess.actionType.delete == true
+//             break;
+//         default:
+//             break;
+//     }
 
-    return flag;
+//     return flag;
 
-}
+// }
 
 const isResourceAccessable = (loggedInUser, resourceAccessQuery) => {
 
@@ -208,7 +329,7 @@ const isResourceAccessable = (loggedInUser, resourceAccessQuery) => {
 
             // Role Match
             if (loggedInUser.roles[i] == roleArr.allRoles[j].roleName) {
-            // console.log("=======+++++++",roleArr.allRoles[j]);
+                // console.log("=======+++++++",roleArr.allRoles[j]);
 
                 let idx = -1;
                 switch (resourceAccessQuery.actionType) {
@@ -225,7 +346,7 @@ const isResourceAccessable = (loggedInUser, resourceAccessQuery) => {
                         break;
                 }
 
-                if(idx != -1){
+                if (idx != -1) {
                     return true;
                 }
 
@@ -236,6 +357,17 @@ const isResourceAccessable = (loggedInUser, resourceAccessQuery) => {
     return false;
 
 
+}
+
+
+const isAdmin = (user) => {
+
+    for (let i in user.roles) {
+        if (user.roles[i] == "admin") {
+            return true;
+        }
+    }
+    return false;
 }
 
 
