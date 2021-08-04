@@ -7,7 +7,7 @@
 Step 1) clone the repo. and checkout to main branch
 
 \
-Step 2) On your terminal run: npm i && run: npm start
+Step 2) On your terminal run: npm i && npm start
 \
 \
 Step 3) Login as admin : username = adminId , password = 123 ,
