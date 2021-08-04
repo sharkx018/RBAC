@@ -15,5 +15,5 @@ Step 3) Login as admin : username = adminId , password = 123 ,
 
 To close the app run: ctrl + c
 
-Here's a sample of the resultant emails:
+Here's a sample:
 ![image info](./login.png)
