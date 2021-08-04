@@ -368,6 +368,9 @@ exports.editRole = async (roleArr, resourcesArr) => {
         allRoleChoices.push(`${roleArr.allRoles[i].roleName}`);
     }
     allRoleChoices.push("cancel");
+    
+    let idx = allRoleChoices.findIndex(p=>p == "admin");
+    allRoleChoices.splice(idx, 1);
 
     let ans1 = await inquirer.prompt([{
         type: 'list',

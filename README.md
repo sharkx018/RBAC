@@ -14,5 +14,9 @@ Step 3) Login as admin : username = adminId , password = 123 or
 
 To close the app run: ctrl + c
 
+Assumptions:
+ 1. Admin role can not be edited
+ 2. Any new user created has 'user' as default role
+
 Here's a sample:
 ![image info](./login.png)
