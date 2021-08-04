@@ -170,7 +170,7 @@ const logAllUsersByRole = (usersArr, role = null) => {
 
 }
 
-exports.updateUserRole = async (usersArr, roleArr) => {
+exports.updateUserRole = async (usersArr, roleArr, loggedInUser) => {
 
 
     let user;
@@ -193,6 +193,12 @@ exports.updateUserRole = async (usersArr, roleArr) => {
 
         // find if the valid user exists or not
         let isValidUser = findUserById(ans1.userId, usersArr);
+
+        if(isValidUser != null && isValidUser.userId.toLowerCase() == loggedInUser.userId.toLowerCase()){
+            console.log("Admin can not update the role of himself.");
+            continue;
+        }
+
         if (isValidUser) {
             user = isValidUser
             break;

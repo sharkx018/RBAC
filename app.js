@@ -70,7 +70,7 @@ const handleAdmin = async () => {
             await listAllUsers(usersArr, roleArr);
             break;
         case 3:
-            await updateUserRole(usersArr, roleArr);
+            await updateUserRole(usersArr, roleArr, loggedInUser);
             break;
 
         case 4:

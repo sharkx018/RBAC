@@ -17,6 +17,8 @@ To close the app run: ctrl + c
 Assumptions:
  1. Admin role can not be edited
  2. Any new user created has 'user' as default role
+ 3. loggedIn admin can not update a roles of himself
+ 4. userId, role, resource are case-insensitive but pasword is case-sensitive
 
 Here's a sample:
 ![image info](./login.png)
