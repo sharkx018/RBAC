@@ -1,7 +1,8 @@
 # RBAC(Role Based Access Control)
-NodeJs
 
-<font size="6"> Steps to run the script: </font> 
+<font size="6"> NodeJs </font> 
+
+<font size="6"> Steps to run the app: </font> 
 
 Step 1) clone the repo. and checkout to main branch
 \
