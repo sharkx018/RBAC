@@ -6,6 +6,7 @@
 
 Step 1) clone the repo. and checkout to main branch
 \
+\
 Step 2) On your terminal run: npm i && npm start
 \
 \
@@ -17,7 +18,7 @@ To close the app run: ctrl + c
 Assumptions:
  1. Admin role can not be edited
  2. Any new user created has 'user' as default role
- 3. loggedIn admin can not update a roles of himself
+ 3. loggedIn admin can not update roles of himself
  4. userId, role, resource are case-insensitive but pasword is case-sensitive
 
 Here's a sample:
