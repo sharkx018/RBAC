@@ -16,14 +16,16 @@ exports.askForLogin = async (usersArr) => {
                 message: 'Enter the password',
             },
         ])
-        // console.log(ans);
-    let x = usersArr.allUsers.find(user => user.userId == ans.username && user.password == ans.pass)
+
+        ans.username = ans.username.trim();
+        ans.pass = ans.pass.trim();
+
+    let x = usersArr.allUsers.find(user => user.userId.toLowerCase() == ans.username.toLowerCase() && user.password == ans.pass)
 
     if (x != null) {
-    
         loggedInUser = x;
     } else {
-        console.log("Incorrect Credentials");
+        console.log("Login failed: Incorrect Credentials");
     }
 
     return x;

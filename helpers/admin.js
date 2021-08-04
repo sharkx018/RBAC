@@ -1,5 +1,5 @@
 const inquirer = require('inquirer');
-const{getAllResources} = require('./common')
+const { getAllResources } = require('./common')
 
 exports.isAdmin = (user) => {
 
@@ -21,20 +21,24 @@ exports.createUser = async (usersArr) => {
         let ans1 = await inquirer.prompt([{
             type: 'input',
             name: "userId",
-            message: `Enter the userId`,
+            message: `Enter the userId, Type exit() to cancel`,
         }])
 
+        ans1.userId = ans1.userId.trim();
+
         // admin is exiting the process
-        if (ans1.userId == "exit()") {
+        if (ans1.userId.toLowerCase() == "exit()") {
             isExit = true;
             break;
         }
 
-        let isValidUserId = true;
+        let [isValidUserId, message] = checkUserIdValidation(ans1.userId, usersArr);
         // TODO validate the userId
         if (isValidUserId) {
             userId = ans1.userId
             break;
+        } else {
+            console.log(message);
         }
     }
 
@@ -47,20 +51,23 @@ exports.createUser = async (usersArr) => {
         let ans2 = await inquirer.prompt([{
             type: 'input',
             name: "password",
-            message: `Enter the password(password will be shown for admin only).`,
+            message: `Enter the password(password will be shown for admin only). Type exit() to cancel`,
         }])
 
+        ans2.password = ans2.password.trim();
         // admin is exiting the process
-        if (ans2.password == "exit()") {
+        if (ans2.password.toLowerCase() == "exit()") {
             isExit = true;
             break;
         }
 
-        let isValidPassword = true;
+        let [isValidPassword, message] = checkPasswordValidation(ans2.password);
         // TODO validate the password
         if (isValidPassword) {
             password = ans2.password
             break;
+        } else {
+            console.log(message);
         }
     }
 
@@ -71,6 +78,38 @@ exports.createUser = async (usersArr) => {
     // ask for role
     usersArr.addUser(userId, password, ["user"]);
     console.log("User created with default role as `user`");
+
+}
+
+const checkUserIdValidation = (userId, usersArr) => {
+
+    userId = userId.trim();
+    if (userId.length == 0) {
+        return [false, "Please enter a valid userId. (Can not be empty)"]
+    }
+
+    let idx = usersArr.allUsers.findIndex(user => user.userId.toLowerCase() == userId.toLowerCase());
+    if (idx != -1) {
+        return [false, "UserId already exists, Please try another one."];
+    }
+
+    return [true, ""];
+
+
+}
+
+const checkPasswordValidation = (password) => {
+
+    password = password.trim();
+    if (password.length == 0) {
+        return [false, "Password is required"];
+    }
+
+    if (password.length < 4) {
+        return [false, "Please enter the password with length greater than 3"]
+    }
+
+    return [true];
 
 }
 
@@ -120,10 +159,12 @@ exports.listAllUsers = async (usersArr, roleArr) => {
 const logAllUsersByRole = (usersArr, role = null) => {
 
     console.log("List of all userId(s):");
+    let ct = 1;
     for (let i in usersArr.allUsers) {
         let idx = usersArr.allUsers[i].roles.findIndex(p => p == role);
         if (idx != -1 || role == null) {
-            console.log(usersArr.allUsers[i].userId);
+            console.log(ct, usersArr.allUsers[i].userId);
+            ct++;
         }
     }
 
@@ -142,9 +183,10 @@ exports.updateUserRole = async (usersArr, roleArr) => {
             name: "userId",
             message: `Enter the userId, type exit() to cancel.`,
         }])
+        ans1.userId = ans1.userId.trim();
 
         // admin is exiting the process
-        if (ans1.userId == "exit()") {
+        if (ans1.userId.toLowerCase() == "exit()") {
             isExit = true;
             break;
         }
@@ -165,6 +207,7 @@ exports.updateUserRole = async (usersArr, roleArr) => {
 
     let roleInfoArr = getRoleInfoForUser(user, roleArr);
 
+    roleInfoArr.push("cancel");
 
     let ans2 = await inquirer.prompt([{
         type: 'list',
@@ -172,6 +215,8 @@ exports.updateUserRole = async (usersArr, roleArr) => {
         message: `Select the role to update.`,
         choices: roleInfoArr
     }])
+
+    if (ans2.roleInfo == "cancel") return;
 
     let [role, status] = parseRoleInfo(ans2.roleInfo);
 
@@ -241,7 +286,7 @@ const parseRoleInfo = (roleInfoItem) => {
 
 const findUserById = (userId, usersArr) => {
 
-    let user = usersArr.allUsers.find(user => user.userId == userId);
+    let user = usersArr.allUsers.find(user => user.userId.toLowerCase() == userId.toLowerCase());
 
     return user;
 
@@ -258,22 +303,23 @@ exports.addNewRole = async (roleArr) => {
         let ans1 = await inquirer.prompt([{
             type: 'input',
             name: "roleName",
-            message: `Enter the role name`,
+            message: `Enter the role name,  Type exit() to cancel`,
         }])
 
+        ans1.roleName = ans1.roleName.trim().toLowerCase();
         // admin is exiting the process
-        if (ans1.roleName == "exit()") {
+        if (ans1.roleName.toLowerCase() == "exit()") {
             isExit = true;
             break;
         }
 
         // TODO validate the resource for duplication
-        let isValidRole = true;
+        let [isValidRole, message] = checkRoleValidation(ans1.roleName, roleArr);
         if (isValidRole) {
             roleName = ans1.roleName
             break;
         } else {
-            console.log("Not a valid role, Please try again.");
+            console.log(message);
         }
 
     }
@@ -283,6 +329,22 @@ exports.addNewRole = async (roleArr) => {
 
     roleArr.addNewRole(roleName);
 
+
+}
+
+const checkRoleValidation = (roleName, roleArr)=>{
+
+    if(roleName.trim().length == 0){
+        return [false, "Please enter valid role name. (cannot be empty)"]
+    }
+
+    let idx = roleArr.allRoles.findIndex(roleItem => roleItem.roleName.trim().toLowerCase() == roleName.trim().toLowerCase());
+
+    if(idx != -1){
+        return [false, "Role already exits, Please try another one"];
+    }
+
+    return [true, ""];
 
 }
 
@@ -305,6 +367,7 @@ exports.editRole = async (roleArr, resourcesArr) => {
     for (let i in roleArr.allRoles) {
         allRoleChoices.push(`${roleArr.allRoles[i].roleName}`);
     }
+    allRoleChoices.push("cancel");
 
     let ans1 = await inquirer.prompt([{
         type: 'list',
@@ -313,7 +376,11 @@ exports.editRole = async (roleArr, resourcesArr) => {
         choices: allRoleChoices
     }])
 
+    if (ans1.roleChoice == "cancel") return;
+
     let resourceDetailsArr = getResoureceDetailsForGivenRole(ans1.roleChoice, roleArr, resourcesArr); //TODO
+
+    resourceDetailsArr.push("cancel");
 
     let ans2 = await inquirer.prompt([{
         type: 'list',
@@ -321,6 +388,8 @@ exports.editRole = async (roleArr, resourcesArr) => {
         message: `Select the resource`,
         choices: resourceDetailsArr
     }])
+
+    if (ans2.resourceItem == "cancel") return;
 
     let resourceName = parseResourceName(ans2.resourceItem); //TODO
 
@@ -406,20 +475,23 @@ exports.addResource = async (resourcesArr) => {
         let ans1 = await inquirer.prompt([{
             type: 'input',
             name: "resourceName",
-            message: `Enter the resource name`,
+            message: `Enter the resource name, Type exit() to cancel`,
         }])
 
+        ans1.resourceName = ans1.resourceName.trim();
         // admin is exiting the process
-        if (ans1.resourceName == "exit()") {
+        if (ans1.resourceName.toLowerCase() == "exit()") {
             isExit = true;
             break;
         }
 
         // TODO validate the resource for duplication
-        let isValidResource = true;
+        let [isValidResource, message] = checkResourceValidation(ans1.resourceName, resourcesArr);
         if (isValidResource) {
             resName = ans1.resourceName
             break;
+        }else{
+            console.log(message);
         }
 
     }
@@ -429,10 +501,24 @@ exports.addResource = async (resourcesArr) => {
     }
 
     // add in the resource arr;
-    resourcesArr.addNewResource(resName);
+    resourcesArr.addNewResource(resName.toUpperCase());
 
 }
 
+const checkResourceValidation = (resourceName, resourcesArr)=>{
+
+    if(resourceName.trim().length == 0){
+        return [false, "Please enter a valid resource name. (can not be empty) "]
+    }
+
+    let idx = resourcesArr.allResources.findIndex(p=>p.name.toLowerCase() == resourceName.trim().toLowerCase());
+    if(idx != -1){
+        return [false, "Resource name already exists, please try another one."];
+    }
+
+    return [true, ""];
+
+}
 
 exports.listAllResources = (resourcesArr) => {
     console.log("List of all the resources");
